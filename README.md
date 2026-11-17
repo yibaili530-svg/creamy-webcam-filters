@@ -9,12 +9,12 @@ Everything runs locally in your browser. The camera feed is never uploaded.
 
 ## How it works
 
-- **Skeleton only, no silhouette model.** The only detector is MediaPipe Pose Landmarker lite (33 keypoints). I don't fake a pixel-accurate outline; the whole-body feel is built from the skeleton.
-- **Volume from the skeleton.** Each orb is anchored along a limb, slightly off the bone, or across the torso between shoulders and hips. Overlapping orbs fill out the head, chest, arms and legs, so it reads as a body, not a stick figure.
-- **Sized to the person.** Orb sizes are in shoulder widths (estimated from the ears or eyes when the shoulders are out of frame), so the figure keeps its proportions at any distance.
-- **Smooth, with a little weight.** Joints go through a One Euro filter (heavier at rest, lighter when moving) with at most 50 ms of lookahead, and orbs follow them on springs instead of snapping.
-- **Stable over twitchy.** Body parts (head, torso, each arm, hand and leg) appear and disappear as groups: a part must be detected for 280 ms to fade in (450 ms) and missing for 700 ms to fade out (650 ms). Brief dropouts keep the last pose, so a jittery landmark never flickers the figure.
-- **Alive when still.** Most orbs are soft, a few small-to-medium ones stay crisp, and every orb breathes in size, colour and softness on its own rhythm.
+The hard part was finding the balance between a precise skeleton and something that reads as a whole body. Here is how I approached it:
+
+- **Start from the skeleton only.** The only model is MediaPipe Pose Landmarker lite, which gives 33 body keypoints. There is no segmentation or outline model, so the figure never tries to trace your exact edges.
+- **Grow a body around the bones.** Instead of drawing a stick figure, I spread soft light dots along each limb and across the torso. Where they overlap, they fill out into a head, chest, arms and legs, so the skeleton disappears and a body shape takes its place.
+- **Let whole body parts come and go together.** The head, torso, arms and legs each appear or fade as one group, and only after they have been seen (or missing) for a moment. A jittery keypoint therefore never makes the figure flicker.
+- **Keep it alive.** Every dot breathes slowly in size, colour and softness on its own rhythm, so the figure feels organic even when you stand still.
 
 ## Run locally
 
