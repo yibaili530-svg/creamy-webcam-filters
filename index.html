@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Dots</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="gl"></canvas>
+    <div id="hud" hidden></div>
+    <div id="notice" hidden></div>
+    <div id="controls">
+      <button id="btn-ui" type="button" title="Show or hide on-screen info (H)">Info H</button>
+      <button id="btn-bg" type="button" title="Switch light or dark background (B)">Dark B</button>
+    </div>
+    <!-- Hidden but playing: the video element is the camera frame source. -->
+    <video id="cam" playsinline muted></video>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
