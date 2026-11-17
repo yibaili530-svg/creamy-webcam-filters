@@ -7,14 +7,57 @@ out together, so brief detection dropouts do not make the figure flicker.
 
 Everything runs locally in your browser. The camera feed is never uploaded.
 
-## How it works
+## How to build this
 
-The hard part was finding the balance between a precise skeleton and something that reads as a whole body. Here is how I approached it:
+### The idea
 
-- **Start from the skeleton only.** The only model is MediaPipe Pose Landmarker lite, which gives 33 body keypoints. There is no segmentation or outline model, so the figure never tries to trace your exact edges.
-- **Grow a body around the bones.** Instead of drawing a stick figure, I spread soft light dots along each limb and across the torso. Where they overlap, they fill out into a head, chest, arms and legs, so the skeleton disappears and a body shape takes its place.
-- **Let whole body parts come and go together.** The head, torso, arms and legs each appear or fade as one group, and only after they have been seen (or missing) for a moment. A jittery keypoint therefore never makes the figure flicker.
-- **Keep it alive.** Every dot breathes slowly in size, colour and softness on its own rhythm, so the figure feels organic even when you stand still.
+Read the webcam, find 33 skeleton points with a pose model, then grow a body by spreading soft light dots along the bones. Keep it steady when the detector jitters, and let every dot breathe so the figure feels alive even when you stand still.
+
+### What you need to know
+
+- **Camera:** `navigator.mediaDevices.getUserMedia` for the webcam stream.
+- **Pose detection:** MediaPipe Pose Landmarker (lite). It returns 33 landmarks per person, each with a visibility and presence score. This is the only model: no segmentation, no outline.
+- **Web Worker:** inference runs off the main thread, with one frame in flight at a time, so drawing never waits for the model.
+- **Smoothing:** a One Euro filter per joint smooths heavily at rest and lightly when you move.
+- **WebGL2:** all dots are drawn in one instanced call. A fragment shader paints each one as a soft or crisp round orb.
+- **Vite** for the dev server and build.
+
+```
+camera.js ──frames──▶ pose-client.js ──▶ pose-worker.js (Pose Landmarker)
+                                              │ 33 landmarks + scores
+                                              ▼
+           visibility.js ◀── joints.js (one-euro.js smoothing)
+     (which body parts to show)               │
+                                              ▼
+                                  particles.js (dots on the bones)
+                                              │
+                                              ▼
+                                  renderer.js (WebGL2 soft orbs)
+```
+
+### How to code it
+
+1. **Get frames.** Open the camera (`camera.js`) and send each frame as an `ImageBitmap` to a worker (`pose-client.js`).
+2. **Detect the pose.** In the worker, run Pose Landmarker and post the landmarks back (`pose-worker.js`).
+3. **Smooth the joints.** Filter each joint with a One Euro filter and interpolate between samples (`one-euro.js`, `joints.js`).
+4. **Decide what to show.** Group joints into body parts (head, torso, arms, hands, legs). Fade a part in or out as a whole, only after it has been seen or missing for a moment (`visibility.js`).
+5. **Grow the body.** Anchor a few overlapping dots to points along each limb and across the torso. Size them by shoulder width, and let them follow on springs (`particles.js`).
+6. **Draw.** Upload the dots as instances. In the shader, give each one a soft feather (a few small ones stay crisp) and a breathing rhythm in size, colour and softness (`renderer.js`).
+
+### Or ask your AI to build it
+
+```text
+Build a browser webcam sketch with Vite and WebGL2. Use only MediaPipe Pose Landmarker lite
+(33 keypoints) in a Web Worker: no segmentation. Turn the skeleton into a body made of
+overlapping soft light dots anchored along each limb and across the torso, sized relative to
+shoulder width. Smooth joints with a One Euro filter. Show or hide whole body parts (head, torso,
+arms, hands, legs) as groups, with a short debounce, so detection jitter never makes it flicker.
+Most dots are soft and feathered, and a few small ones are crisp. Every dot breathes in size,
+colour and softness on its own rhythm. Saturated colours on an empty gradient background.
+H toggles the on-screen info and B toggles a dark background.
+```
+
+Build it in steps. Start with plain dots on the 33 joints and get them steady, then add the body volume, then tune stability and style. Check each step on camera before moving on.
 
 ## Run locally
 
